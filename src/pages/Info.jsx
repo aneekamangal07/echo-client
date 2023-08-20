@@ -14,10 +14,17 @@ const Info = () => {
     [email, room, socket]
   );
 
+  const handleJoin = useCallback((data) => {
+    const { email, room } = data;
+    console.log(email, room);
+  }, []);
+
   useEffect(() => {
-    socket.on("room:join", (data) => {
-      console.log(`Data from be ${data}`);
-    });
+    socket.on("room:join", handleJoin);
+    return () => {
+      socket.off("room:join", handleJoin);
+      // console.log(`Data from be ${data}`);
+    };
   }, [socket]);
 
   return (
