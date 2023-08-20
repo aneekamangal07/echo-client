@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useCallback, useState } from "react";
 import { useSocket } from "../context/SocketProvider";
 
@@ -13,6 +13,13 @@ const Info = () => {
     },
     [email, room, socket]
   );
+
+  useEffect(() => {
+    socket.on("room:join", (data) => {
+      console.log(`Data from be ${data}`);
+    });
+  }, [socket]);
+
   return (
     <div className="flex flex-col">
       <form action="" onSubmit={handleSubmit}>
