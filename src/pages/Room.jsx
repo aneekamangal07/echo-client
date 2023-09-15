@@ -38,22 +38,26 @@ const Room = () => {
     },
     [socket]
   );
+  
+  const sendStreams = useCallback(() => {
+    for (const track of myStream.getTracks()) {
+      peer.peer.addTrack(track, myStream);
+    }
+  }, [myStream]);
 
   const handleCallAccepted = useCallback(
     ({ from, ansCall }) => {
       peer.setLocalDescription(ansCall);
       console.log("Call Accepted!");
-      for (const track of myStream.getTracks()) {
-        peer.peer.addTrack(track, myStream);
-      }
+      sendStreams();
     },
-    [myStream]
+    [sendStreams]
   );
 
   const handleNegoneeded = useCallback(async () => {
     const offer = await peer.getOffer();
     socket.emit("peer:nego:needed", { offer, to: remoteSocketId });
-  }, [handleNegoneeded]);
+  }, [remoteSocketId, socket]);
 
   const handleNegoIncoming = useCallback(
     async ({ from, offer }) => {
