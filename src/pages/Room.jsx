@@ -7,6 +7,7 @@ const Room = () => {
   const socket = useSocket();
   const [remoteSocketId, setRemoteSocketId] = useState(null);
   const [myStream, setMyStream] = useState();
+  const [remoteStream, setRemoteStream] = useState();
 
   const handleUserJoined = useCallback(({ email, id }) => {
     console.log(`${email} joined!`);
@@ -24,23 +25,37 @@ const Room = () => {
   }, [remoteSocketId, socket]);
 
   const handleIncomingCall = useCallback(
-    async ({ fromId, offer }) => {
-      setRemoteSocketId(fromId);
+    async ({ from, offer }) => {
+      setRemoteSocketId(from);
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
         video: true,
       });
       setMyStream(stream);
-      console.log(`incoming call `, fromId, offer);
+      console.log(`incoming call `, from, offer);
       const ansCall = await peer.answerCall(offer);
-      socket.emit("call:accepted", { to: fromId, ansCall });
+      socket.emit("call:accepted", { to: from, ansCall });
     },
     [socket]
   );
 
-  const handleCallAccepted = useCallback(({ fromId, ansCall }) => {
-    peer.setLocalDescription(ansCall);
-    console.log("Call Accepted!");
+  const handleCallAccepted = useCallback(
+    ({ from, ansCall }) => {
+      peer.setLocalDescription(ansCall);
+      console.log("Call Accepted!");
+      for (const track of myStream.getTracks()) {
+        peer.peer.addTrack(track, myStream);
+      }
+    },
+    [myStream]
+  );
+
+  useEffect(() => {
+    peer.peer.addEventListener("track", async (e) => {
+      const remoteStream = e.streams;
+      console.log("everything works!");
+      setRemoteStream(remoteStream[0]);
+    });
   }, []);
 
   useEffect(() => {
@@ -68,6 +83,18 @@ const Room = () => {
             height="300px"
             width="300px"
             url={myStream}
+          />
+        </>
+      )}
+      {remoteStream && (
+        <>
+          <h1>remote stream</h1>
+          <ReactPlayer
+            playing
+            muted
+            height="300px"
+            width="300px"
+            url={remoteStream}
           />
         </>
       )}
