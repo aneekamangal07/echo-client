@@ -31,7 +31,7 @@ const Info = () => {
       socket.off("room:join", handleJoin);
       // console.log(`Data from be ${data}`);
     };
-  }, [socket]);
+  }, [socket, handleJoin]);
 
   return (
     <div className="flex flex-col">
@@ -39,12 +39,14 @@ const Info = () => {
         <label htmlFor="">Email ID</label>
         <input
           type="email"
+          id="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
         <label htmlFor="">Room No.</label>
         <input
           type="text"
+          id="room"
           value={room}
           onChange={(e) => setRoom(e.target.value)}
         />
