@@ -50,6 +50,30 @@ const Room = () => {
     [myStream]
   );
 
+  const handleNegoneeded = useCallback(async () => {
+    const offer = await peer.getOffer();
+    socket.emit("peer:nego:needed", { offer, to: remoteSocketId });
+  }, [handleNegoneeded]);
+
+  const handleNegoIncoming = useCallback(
+    async ({ from, offer }) => {
+      const ansCall = await peer.answerCall(offer);
+      socket.emit("peer:nego:complete", { to: from, ansCall });
+    },
+    [socket]
+  );
+
+  const handleNegoDone = useCallback(async ({ ansCall }) => {
+    await peer.setLocalDescription(ansCall);
+  }, []);
+
+  useEffect(() => {
+    peer.peer.addEventListener("negotiationneeded", handleNegoneeded);
+    return () => {
+      peer.peer.removeEventListener("negotiationneeded", handleNegoneeded);
+    };
+  }, [handleNegoneeded]);
+
   useEffect(() => {
     peer.peer.addEventListener("track", async (e) => {
       const remoteStream = e.streams;
@@ -62,12 +86,23 @@ const Room = () => {
     socket.on("user:joined", handleUserJoined);
     socket.on("incoming:call", handleIncomingCall);
     socket.on("call:accepted", handleCallAccepted);
+    socket.on("peer:nego:needed", handleNegoIncoming);
+    socket.on("peer:nego:complete", handleNegoDone);
     return () => {
       socket.off("user:joined", handleUserJoined);
       socket.off("incoming:call", handleIncomingCall);
       socket.off("call:accepted", handleCallAccepted);
+      socket.off("peer:nego:needed", handleNegoIncoming);
+      socket.off("peer:nego:complete", handleNegoDone);
     };
-  }, [socket, handleUserJoined, handleIncomingCall, handleCallAccepted]);
+  }, [
+    socket,
+    handleUserJoined,
+    handleIncomingCall,
+    handleCallAccepted,
+    handleNegoIncoming,
+    handleNegoDone,
+  ]);
 
   return (
     <div>
