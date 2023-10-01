@@ -29,7 +29,7 @@ const Info = () => {
     socket.on("room:join", handleJoin);
     return () => {
       socket.off("room:join", handleJoin);
-      // console.log(`Data from be ${data}`);
+      // console.log(`Data from ${data}`);
     };
   }, [socket, handleJoin]);
 

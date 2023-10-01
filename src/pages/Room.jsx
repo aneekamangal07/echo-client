@@ -38,7 +38,7 @@ const Room = () => {
     },
     [socket]
   );
-  
+
   const sendStreams = useCallback(() => {
     for (const track of myStream.getTracks()) {
       peer.peer.addTrack(track, myStream);
@@ -59,10 +59,17 @@ const Room = () => {
     socket.emit("peer:nego:needed", { offer, to: remoteSocketId });
   }, [remoteSocketId, socket]);
 
+  useEffect(() => {
+    peer.peer.addEventListener("negotiationneeded", handleNegoneeded);
+    return () => {
+      peer.peer.removeEventListener("negotiationneeded", handleNegoneeded);
+    };
+  }, [handleNegoneeded]);
+
   const handleNegoIncoming = useCallback(
     async ({ from, offer }) => {
       const ansCall = await peer.answerCall(offer);
-      socket.emit("peer:nego:complete", { to: from, ansCall });
+      socket.emit("peer:nego:done", { to: from, ansCall });
     },
     [socket]
   );
@@ -70,13 +77,6 @@ const Room = () => {
   const handleNegoDone = useCallback(async ({ ansCall }) => {
     await peer.setLocalDescription(ansCall);
   }, []);
-
-  useEffect(() => {
-    peer.peer.addEventListener("negotiationneeded", handleNegoneeded);
-    return () => {
-      peer.peer.removeEventListener("negotiationneeded", handleNegoneeded);
-    };
-  }, [handleNegoneeded]);
 
   useEffect(() => {
     peer.peer.addEventListener("track", async (e) => {
@@ -91,13 +91,13 @@ const Room = () => {
     socket.on("incoming:call", handleIncomingCall);
     socket.on("call:accepted", handleCallAccepted);
     socket.on("peer:nego:needed", handleNegoIncoming);
-    socket.on("peer:nego:complete", handleNegoDone);
+    socket.on("peer:nego:final", handleNegoDone);
     return () => {
       socket.off("user:joined", handleUserJoined);
       socket.off("incoming:call", handleIncomingCall);
       socket.off("call:accepted", handleCallAccepted);
       socket.off("peer:nego:needed", handleNegoIncoming);
-      socket.off("peer:nego:complete", handleNegoDone);
+      socket.off("peer:nego:final", handleNegoDone);
     };
   }, [
     socket,
@@ -112,6 +112,7 @@ const Room = () => {
     <div>
       <h1>room</h1>
       <p>{remoteSocketId ? "Connected" : "No one else is in the room"}</p>
+      {myStream && <button onClick={sendStreams}>Send Stream</button>}
       {remoteSocketId && <button onClick={handleCallUser}>call</button>}
       {myStream && (
         <>
