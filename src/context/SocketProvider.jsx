@@ -8,11 +8,11 @@ export const useSocket = () => {
   return socket;
 };
 export const SocketProvider = (props) => {
-  const socket = useMemo(() => io("localhost:8000"), []);
+  const socket = useMemo(() => io("https://echo-server-wdih.onrender.com"), []);
 
-  return(
+  return (
     <SocketContext.Provider value={socket}>
-        {props.children}
+      {props.children}
     </SocketContext.Provider>
-  )
+  );
 };
